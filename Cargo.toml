@@ -2,6 +2,8 @@
 name = "tailscale-client"
 version = "0.1.1"
 edition = "2021"
+description = "A Tailscale client library for Rust"
+license = "MIT"
 
 [dependencies]
 reqwest = { version = "0.12.15", features = ["json"] }
