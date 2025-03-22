@@ -223,7 +223,7 @@ mod tests {
                         reusable: Some(true),
                         ephemeral: Some(false),
                         preauthorized: Some(false),
-                        tags: Some(vec!["tag:example".to_string()]),
+                        tags: Some(vec![]),
                     }),
                 },
             },
