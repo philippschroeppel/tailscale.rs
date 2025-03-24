@@ -72,6 +72,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 Contributions are welcome! Please open an issue or pull request.
 
+## Developing
+
+```sh
+make build_test_image
+make test
+```
+
 ## License
 
 Licensed under the terms of the [Apache License 2.0](LICENSE).
