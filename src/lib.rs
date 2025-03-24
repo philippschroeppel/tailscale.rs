@@ -1,7 +1,7 @@
+use anyhow::{anyhow, Error, Result};
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 use reqwest::{Client, Response};
 use serde::{Deserialize, Serialize};
-use std::error::Error;
 use testcontainers::core::ExecCommand;
 
 use testcontainers::{core::WaitFor, runners::AsyncRunner, GenericImage, ImageExt};
@@ -25,7 +25,7 @@ impl TailscaleClient {
     }
 
     /// Constructs an authorized GET request for the given path.
-    async fn get(&self, path: &str) -> Result<Response, Box<dyn Error>> {
+    async fn get(&self, path: &str) -> Result<Response> {
         let mut headers = HeaderMap::new();
         let auth_value = format!("Bearer {}", self.token);
         headers.insert(AUTHORIZATION, HeaderValue::from_str(&auth_value)?);
@@ -37,14 +37,14 @@ impl TailscaleClient {
 
     /// Example method to call the `/whoami` endpoint which returns information
     /// about the current user and their Tailnets.
-    pub async fn whoami(&self) -> Result<WhoAmIResponse, Box<dyn Error>> {
+    pub async fn whoami(&self) -> anyhow::Result<WhoAmIResponse> {
         let resp = self.get("whoami").await?;
         if resp.status().is_success() {
             let data: WhoAmIResponse = resp.json().await?;
             Ok(data)
         } else {
             let error_body = resp.text().await?;
-            Err(format!("Tailscale whoami endpoint error: {}", error_body).into())
+            Err(anyhow!("Tailscale whoami endpoint error: {}", error_body))
         }
     }
 
@@ -56,7 +56,7 @@ impl TailscaleClient {
         tailnet: &str,
         all: bool,
         req_body: &CreateAuthKeyRequest,
-    ) -> Result<CreateAuthKeyResponse, Box<dyn Error>> {
+    ) -> Result<CreateAuthKeyResponse> {
         let mut headers = HeaderMap::new();
         let auth_value = format!("Bearer {}", self.token);
         headers.insert(AUTHORIZATION, HeaderValue::from_str(&auth_value)?);
@@ -77,7 +77,7 @@ impl TailscaleClient {
             Ok(data)
         } else {
             let error_body = resp.text().await?;
-            Err(format!("Tailscale create_auth_key error: {}", error_body).into())
+            Err(anyhow!("Tailscale create_auth_key error: {}", error_body))
         }
     }
 
@@ -92,7 +92,7 @@ impl TailscaleClient {
         &self,
         tailnet: &str,
         fields: Option<&str>,
-    ) -> Result<ListDevicesResponse, Box<dyn std::error::Error>> {
+    ) -> Result<ListDevicesResponse> {
         let mut headers = HeaderMap::new();
         let auth_value = format!("Bearer {}", self.token);
         headers.insert(AUTHORIZATION, HeaderValue::from_str(&auth_value)?);
@@ -109,7 +109,7 @@ impl TailscaleClient {
             Ok(data)
         } else {
             let error_body = resp.text().await?;
-            Err(format!("Tailscale list_devices error: {}", error_body).into())
+            Err(anyhow!("Tailscale list_devices error: {}", error_body))
         }
     }
 
@@ -123,7 +123,7 @@ impl TailscaleClient {
         tailnet: &str,
         name: &str,
         fields: Option<&str>,
-    ) -> Result<Option<TailnetDevice>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<TailnetDevice>> {
         let devices_response = self.list_devices(tailnet, fields).await?;
 
         // Debug: Print out the name we're trying to match:
@@ -187,7 +187,7 @@ impl TailscaleClient {
         &self,
         device_id: &str,
         fields: Option<&str>,
-    ) -> Result<Option<TailnetDevice>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<TailnetDevice>> {
         let mut headers = HeaderMap::new();
         let auth_value = format!("Bearer {}", self.token);
         headers.insert(AUTHORIZATION, HeaderValue::from_str(&auth_value)?);
@@ -206,7 +206,7 @@ impl TailscaleClient {
             Ok(deleted_device)
         } else {
             let error_body = resp.text().await?;
-            Err(format!("Tailscale delete_device error: {}", error_body).into())
+            Err(anyhow!("Tailscale delete_device error: {}", error_body))
         }
     }
 
@@ -233,14 +233,14 @@ impl TailscaleClient {
         tailnet: &str,
         name: &str,
         fields: Option<&str>,
-    ) -> Result<Option<TailnetDevice>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<TailnetDevice>> {
         if let Some(device) = self.find_device_by_name(tailnet, name, fields).await? {
             // We can use either nodeId or id for deletion; prefer nodeId if present.
             if let Some(device_id) = device.nodeId.as_deref().or(device.id.as_deref()) {
                 let deleted = self.delete_device(device_id, fields).await?;
                 Ok(deleted)
             } else {
-                Err(format!("Device found, but it has no valid nodeId or id.").into())
+                Err(anyhow!("Device found, but it has no valid nodeId or id."))
             }
         } else {
             // Device not found
@@ -258,7 +258,7 @@ impl TailscaleClient {
         fields: Option<&str>,
         max_retries: u32,
         delay_secs: u64,
-    ) -> Result<Option<TailnetDevice>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<TailnetDevice>> {
         for attempt in 0..max_retries {
             match self
                 .find_device_by_name(tailnet, device_name, fields)
@@ -461,7 +461,7 @@ pub struct PostureIdentity {
 }
 
 #[tokio::test]
-async fn test_tailscale_normal_in_docker() -> Result<(), Box<dyn Error>> {
+async fn test_tailscale_normal_in_docker() -> Result<()> {
     // 1) Read your Tailscale API token + tailnet from env
     let token = std::env::var("TAILSCALE_API_KEY").expect("Please set TAILSCALE_API_KEY env var.");
     let tailnet = std::env::var("TAILSCALE_TAILNET").unwrap_or_else(|_| "-".to_string());
