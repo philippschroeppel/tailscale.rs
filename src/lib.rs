@@ -142,13 +142,14 @@ impl TailscaleClient {
             );
         }
 
-        // Now actually do the find:
+        // Now actually do the find with case-insensitive comparison:
+        let name_lowercase = name.to_lowercase();
         let device = devices_response.devices.into_iter().find(|d| {
             let split_part = d
                 .name
                 .as_deref()
-                .map(|nm| nm.split('.').next().unwrap_or(""));
-            split_part == Some(name)
+                .map(|nm| nm.split('.').next().unwrap_or("").to_lowercase());
+            split_part.as_deref() == Some(name_lowercase.as_str())
         });
 
         // Debug: Print if we found a device or not:
