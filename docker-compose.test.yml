@@ -1,0 +1,58 @@
+services:
+
+  tailscale-test-1:
+    image: tailscale/tailscale:latest
+    hostname: ${DEVICE_1}
+    environment:
+      - TS_AUTHKEY=${TS_AUTH_KEY}
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+      - TEST_DEVICE_NAME=${DEVICE_1}
+    volumes:
+      - ${PWD}/tailscale-nginx/state-test-1:/var/lib/tailscale
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+    restart: unless-stopped
+    labels:
+      - "test.device=true"
+      - "test.device.name=${DEVICE_1}"
+
+  tailscale-test-2:
+    image: tailscale/tailscale:latest
+    hostname: ${DEVICE_2}
+    environment:
+      - TS_AUTHKEY=${TS_AUTH_KEY}
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+      - TEST_DEVICE_NAME=${DEVICE_2}
+    volumes:
+      - ${PWD}/tailscale-nginx/state-test-2:/var/lib/tailscale
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+    restart: unless-stopped
+    labels:
+      - "test.device=true"
+      - "test.device.name=${DEVICE_2}"
+
+  tailscale-test-3:
+    image: tailscale/tailscale:latest
+    hostname: ${DEVICE_3}
+    environment:
+      - TS_AUTHKEY=${TS_AUTH_KEY}
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+      - TEST_DEVICE_NAME=${DEVICE_3}
+    volumes:
+      - ${PWD}/tailscale-nginx/state-test-3:/var/lib/tailscale
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+    restart: unless-stopped
+    labels:
+      - "test.device=true"
+      - "test.device.name=${DEVICE_3}"
