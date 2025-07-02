@@ -1,10 +1,8 @@
-use anyhow::{anyhow, Error, Result};
+use anyhow::{anyhow, Result};
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 use reqwest::{Client, Response};
 use serde::{Deserialize, Serialize};
-use testcontainers::core::ExecCommand;
 
-use testcontainers::{core::WaitFor, runners::AsyncRunner, GenericImage, ImageExt};
 
 /// A client for interacting with Tailscale's v2 API.
 pub struct TailscaleClient {
@@ -237,7 +235,7 @@ impl TailscaleClient {
     ) -> Result<Option<TailnetDevice>> {
         if let Some(device) = self.find_device_by_name(tailnet, name, fields).await? {
             // We can use either nodeId or id for deletion; prefer nodeId if present.
-            if let Some(device_id) = device.nodeId.as_deref().or(device.id.as_deref()) {
+            if let Some(device_id) = device.node_id.as_deref().or(device.id.as_deref()) {
                 let deleted = self.delete_device(device_id, fields).await?;
                 Ok(deleted)
             } else {
@@ -321,8 +319,8 @@ pub struct CreateAuthKeyRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub expirySeconds: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "expirySeconds")]
+    pub expiry_seconds: Option<u64>,
 
     pub capabilities: Capabilities,
 }
@@ -370,7 +368,8 @@ pub struct CreateAuthKeyResponse {
 
     pub description: Option<String>,
     pub invalid: Option<bool>,
-    pub userId: Option<String>,
+    #[serde(rename = "userId")]
+    pub user_id: Option<String>,
 }
 
 /// Nested capabilities info in the create-auth-key response.
@@ -403,29 +402,44 @@ pub struct ListDevicesResponse {
 pub struct TailnetDevice {
     pub addresses: Option<Vec<String>>,
     pub id: Option<String>,
-    pub nodeId: Option<String>,
+    #[serde(rename = "nodeId")]
+    pub node_id: Option<String>,
     pub user: Option<String>,
     pub name: Option<String>,
     pub hostname: Option<String>,
-    pub clientVersion: Option<String>,
-    pub updateAvailable: Option<bool>,
+    #[serde(rename = "clientVersion")]
+    pub client_version: Option<String>,
+    #[serde(rename = "updateAvailable")]
+    pub update_available: Option<bool>,
     pub os: Option<String>,
     pub created: Option<String>,
-    pub lastSeen: Option<String>,
-    pub keyExpiryDisabled: Option<bool>,
+    #[serde(rename = "lastSeen")]
+    pub last_seen: Option<String>,
+    #[serde(rename = "keyExpiryDisabled")]
+    pub key_expiry_disabled: Option<bool>,
     pub expires: Option<String>,
     pub authorized: Option<bool>,
-    pub isExternal: Option<bool>,
-    pub machineKey: Option<String>,
-    pub nodeKey: Option<String>,
-    pub blocksIncomingConnections: Option<bool>,
-    pub enabledRoutes: Option<Vec<String>>,
-    pub advertisedRoutes: Option<Vec<String>>,
-    pub clientConnectivity: Option<ClientConnectivity>,
+    #[serde(rename = "isExternal")]
+    pub is_external: Option<bool>,
+    #[serde(rename = "machineKey")]
+    pub machine_key: Option<String>,
+    #[serde(rename = "nodeKey")]
+    pub node_key: Option<String>,
+    #[serde(rename = "blocksIncomingConnections")]
+    pub blocks_incoming_connections: Option<bool>,
+    #[serde(rename = "enabledRoutes")]
+    pub enabled_routes: Option<Vec<String>>,
+    #[serde(rename = "advertisedRoutes")]
+    pub advertised_routes: Option<Vec<String>>,
+    #[serde(rename = "clientConnectivity")]
+    pub client_connectivity: Option<ClientConnectivity>,
     pub tags: Option<Vec<String>>,
-    pub tailnetLockError: Option<String>,
-    pub tailnetLockKey: Option<String>,
-    pub postureIdentity: Option<PostureIdentity>,
+    #[serde(rename = "tailnetLockError")]
+    pub tailnet_lock_error: Option<String>,
+    #[serde(rename = "tailnetLockKey")]
+    pub tailnet_lock_key: Option<String>,
+    #[serde(rename = "postureIdentity")]
+    pub posture_identity: Option<PostureIdentity>,
 }
 
 /// Nested client connectivity data.
@@ -433,21 +447,25 @@ pub struct TailnetDevice {
 pub struct ClientConnectivity {
     pub endpoints: Option<Vec<String>>,
     pub latency: Option<std::collections::HashMap<String, LatencyInfo>>,
-    pub mappingVariesByDestIP: Option<bool>,
-    pub clientSupports: Option<ClientSupports>,
+    #[serde(rename = "mappingVariesByDestIP")]
+    pub mapping_varies_by_dest_ip: Option<bool>,
+    #[serde(rename = "clientSupports")]
+    pub client_supports: Option<ClientSupports>,
 }
 
 /// Per-exit-node latency info.
 #[derive(Debug, Deserialize)]
 pub struct LatencyInfo {
     pub preferred: Option<bool>,
-    pub latencyMs: Option<f64>,
+    #[serde(rename = "latencyMs")]
+    pub latency_ms: Option<f64>,
 }
 
 /// Flags indicating which network features the client supports.
 #[derive(Debug, Deserialize)]
 pub struct ClientSupports {
-    pub hairPinning: Option<bool>,
+    #[serde(rename = "hairPinning")]
+    pub hair_pinning: Option<bool>,
     pub ipv6: Option<bool>,
     pub pcp: Option<bool>,
     pub pmp: Option<bool>,
@@ -458,7 +476,8 @@ pub struct ClientSupports {
 /// Helps encode any posture/identity info.
 #[derive(Debug, Deserialize)]
 pub struct PostureIdentity {
-    pub serialNumbers: Option<Vec<String>>,
+    #[serde(rename = "serialNumbers")]
+    pub serial_numbers: Option<Vec<String>>,
 }
 
 #[tokio::test]
@@ -472,7 +491,7 @@ async fn test_tailscale_normal_in_docker() -> Result<()> {
     // 2) Create an auth key (optionally remove ephemeral & preauthorized)
     let request_body = CreateAuthKeyRequest {
         description: Some("Docker test device normal".to_string()),
-        expirySeconds: None,
+        expiry_seconds: None,
         capabilities: Capabilities {
             devices: Devices {
                 create: Some(CreateOpts {

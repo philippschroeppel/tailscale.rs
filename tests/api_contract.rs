@@ -107,7 +107,7 @@ async fn test_find_all_docker_devices() -> Result<()> {
         println!("✓ Found device: {} (ID: {})", device_name, device.id.as_ref().unwrap());
         
         // Verify device has connectivity info
-        if let Some(connectivity) = &device.clientConnectivity {
+        if let Some(connectivity) = &device.client_connectivity {
             if let Some(endpoints) = &connectivity.endpoints {
                 assert!(!endpoints.is_empty(), "Device {} should have endpoints", device_name);
                 println!("  Endpoints: {:?}", endpoints);
@@ -171,7 +171,7 @@ async fn test_list_devices_default() -> Result<()> {
     
     // Verify we got some basic device info
     for device in &devices.devices {
-        assert!(device.id.is_some() || device.nodeId.is_some(), "Device should have an ID");
+        assert!(device.id.is_some() || device.node_id.is_some(), "Device should have an ID");
     }
     
     println!("✓ List devices (default) test passed!");
@@ -191,9 +191,9 @@ async fn test_list_devices_all_fields() -> Result<()> {
     
     // Verify we got extended device info
     for device in &devices.devices {
-        assert!(device.id.is_some() || device.nodeId.is_some(), "Device should have an ID");
+        assert!(device.id.is_some() || device.node_id.is_some(), "Device should have an ID");
         // With "all" fields, we should get more detailed info
-        if let Some(connectivity) = &device.clientConnectivity {
+        if let Some(connectivity) = &device.client_connectivity {
             println!("  Device has connectivity info: {:?}", connectivity.endpoints);
         }
     }
@@ -242,7 +242,7 @@ async fn test_find_device_by_name_all_fields() -> Result<()> {
         println!("✓ Found device: {} (ID: {})", first_device, device.id.as_ref().unwrap());
         
         // Verify we got extended info
-        if let Some(connectivity) = &device.clientConnectivity {
+        if let Some(connectivity) = &device.client_connectivity {
             println!("  Device has connectivity info: {:?}", connectivity.endpoints);
         }
     }
@@ -265,7 +265,7 @@ async fn test_create_auth_key() -> Result<()> {
     
     let create_request = CreateAuthKeyRequest {
         description: Some("API contract test auth key".to_string()),
-        expirySeconds: Some(1800), // 30 minutes
+        expiry_seconds: Some(1800), // 30 minutes
         capabilities: Capabilities {
             devices: Devices {
                 create: Some(CreateOpts {
@@ -311,7 +311,7 @@ async fn test_create_reusable_auth_key() -> Result<()> {
     
     let create_request = CreateAuthKeyRequest {
         description: Some("Reusable API contract test auth key".to_string()),
-        expirySeconds: Some(3600), // 1 hour
+        expiry_seconds: Some(3600), // 1 hour
         capabilities: Capabilities {
             devices: Devices {
                 create: Some(CreateOpts {
@@ -450,7 +450,7 @@ async fn test_comprehensive_api_workflow() -> Result<()> {
     // Step 4: Create an auth key
     let create_request = CreateAuthKeyRequest {
         description: Some("Workflow test auth key".to_string()),
-        expirySeconds: Some(900), // 15 minutes
+        expiry_seconds: Some(900), // 15 minutes
         capabilities: Capabilities {
             devices: Devices {
                 create: Some(CreateOpts {
